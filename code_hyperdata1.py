@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn import svm
 import time
-from threading import Thread
 
 mat = scipy.io.loadmat('./data_hyper.mat')
 node_data = {}
@@ -32,7 +31,7 @@ def get_means_list(train_data, current_node):
 
 def construct_node_data(node_data, current_node, N):
 	
-	print (node_data.keys())
+	print node_data.keys()
 
 	if len(current_node) <= 1:
 		return
@@ -49,7 +48,7 @@ def construct_node_data(node_data, current_node, N):
 	for i,key in enumerate(current_node):
 		training_feats.extend(train_data[key])
 		l = train_data[key].shape[0]
-		print (l)
+		print l
 		temp = [0,0]
 		temp[means_classes[i]] = 1
 		H_train.extend([temp]*l)
@@ -93,7 +92,7 @@ def classify_datapoint(datapoint, node_data = node_data, headnode = headnode):
 	while len(current_node) > 1:
 		clf = node_data[current_node]["classifier"]
 		prediction = clf.predict(datapoint)[0]
-		print ("Prediction:",prediction)
+		print "Prediction:",prediction
 		current_node = node_data[current_node][prediction]
 	return current_node[0]
 
@@ -113,7 +112,7 @@ def get_accuracy(test_data):
 			if classify_datapoint(datapoint) == key:
 				correct += 1
 	accuracy = float(correct)/float(total)
-	print ("****"*20,"\n",correct,"samples correctly classified out of total",total,"samples","\n","****"*20)
+	print "****"*20,"\n",correct,"samples correctly classified out of total",total,"samples","\n","****"*20
 	return accuracy
 
 def construct_test_data(test_data):
@@ -122,37 +121,11 @@ def construct_test_data(test_data):
 	for key in test_data.keys():
 		testing_feats.extend(test_data[key])
 		l = test_data[key].shape[0]
-		print (l)
+		print l
 		temp = [0,0]
 		H_test.extend([temp]*l)
 	H_test = np.transpose(np.array(H_test))
 	testing_feats = np.transpose(np.array(testing_feats))
-
-def start_matlab(id):
-	print id
-
-
-def matlab_vaali_backchodi(sleep_time = 150):
-	for key_tuple in node_data.keys():
-		data = node_data[key_tuple]
-		H_train = data["H_train"]
-		training_feats = data["training_feats"]
-		
-		dest = "c:/tmp/arrdata.mat"
-		scipy.io.savemat(dest, mdict={'H_train': H_train, 'training_feats': training_feats, 'H_test': H_test, 'testing_feats': testing_feats})
-
-		# Call Matlab Here
-		#######################################
-		id = str(key_tuple)[1:-1]
-		thread = Thread(target = start_matlab, args = (id,))
-
-	time.sleep(sleep_time)
-	# Save the contents
-	for key_tuple in node_data.keys():
-		temp = scipy.io.loadmat("./trainingdata/predictions.mat")
-		filename = "prediction_"+str(key_tuple)[1:-1]+".mat"
-		scipy.io.savemat(filename,temp)
-	
 
 def set_prediction_data_lcksvd():
 	for key_tuple in node_data.keys():
@@ -168,17 +141,37 @@ def get_prediction_lcksvd(testing_feats, node_data, headnode):
 		for point in test_data[key]:
 			current_node = headnode
 			while len(current_node) > 1:
-				print (node_data[current_node]["prediction"],point_index)
+				print node_data[current_node]["prediction"],point_index
 				pred = node_data[current_node]["prediction"][0][point_index]
-				print ("Prediction:",pred)
+				print "Prediction:",pred
 				current_node = node_data[current_node][pred]
 			if current_node[0] == key:
 				correct += 1
 			point_index += 1
 	accuracy = float(correct)/float(point_index)
-	print ("****"*20,"\n",correct,"samples correctly classified out of total",point_index,"samples","\n","****"*20)
-	print ("Accuracy:",accuracy)
+	print "****"*20,"\n",correct,"samples correctly classified out of total",point_index,"samples","\n","****"*20
+	print "Accuracy:",accuracy
 	return accuracy
+
+
+def matlab_vaali_backchodi(sleep_time = 150):
+	for key_tuple in node_data.keys():
+		data = node_data[key_tuple]
+		H_train = data["H_train"]
+		training_feats = data["training_feats"]
+		
+		dest = "c:/tmp/arrdata.mat"
+		scipy.io.savemat(dest, mdict={'H_train': H_train, 'training_feats': training_feats, 'H_test': H_test, 'testing_feats': testing_feats})
+
+		# Call Matlab Here
+		#######################################
+
+		time.sleep_time(sleep_time)
+		
+		# Save the contents
+		temp = scipy.io.loadmat("./trainingdata/predictions.mat")
+		filename = "prediction_"+str(key_tuple)[1:-1]+".mat"
+		scipy.io.savemat(filename,temp)
 
 
 train_data = build_dict(mat['TR1'])
@@ -194,35 +187,25 @@ if test_svm:
 
 	accuracy = get_accuracy(test_data)
 
-	print ("SVM Accuracy:",accuracy)
-
+	print "Accuracy:",accuracy
 
 
 # Build test data
-
 H_test = []
 testing_feats = []
 for key in test_data.keys():
 	testing_feats.extend(test_data[key])
 	l = test_data[key].shape[0]
-	print (l)
-	temp = [0,0]
+	print l
+	if key == 0 or key == 1 or key == 6:
+		temp = [0,1]
+	else:
+		temp = [1,0]
 	H_test.extend([temp]*l)
 H_test = np.transpose(np.array(H_test))
 testing_feats = np.transpose(np.array(testing_feats))
 
 
+
 set_prediction_data_lcksvd()
 get_prediction_lcksvd(testing_feats, node_data, headnode)
-
-
-
-
-
-
-
-
-
-
-
-
